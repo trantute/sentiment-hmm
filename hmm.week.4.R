@@ -1,0 +1,134 @@
+library(zoo); # für sliding window
+library(anytime); # für Zeitumrechnung
+library(data.table); # für Tabellenkonvertierung
+library('depmixS4'); # für HMMs
+
+temp <- tempfile();
+download.file("https://api.bitcoincharts.com/v1/csv/bitstampUSD.csv.gz", temp);
+table <- read.csv(gzfile(temp));
+unlink(temp);
+
+rm(temp);
+gc();
+
+# Benennung der Spalten
+colnames(table) <- c("EPOCH", "PRICE", "VOLUME");
+
+# Anfügen einer neuen Spalten mit den Daten (Datums), da ansonsten Epochs
+table <- cbind(table, "DATE"=anydate(table[,1]), "CEST");
+
+DT <- data.table(table); # anderer Tabellentyp
+
+# berechne den gewichteten Mittelwert des Preises eines Tages
+x <- DT[,list(MEAN_PRICE = weighted.mean(PRICE,VOLUME)),by=DATE];
+rm(DT);
+gc();
+
+# berechne den Eröffnungspreis eines Tages
+open <- aggregate(PRICE ~ DATE, table, function(x){return(head(x, 1))});
+# berechne den Schliessungspreis eines Tages
+close <- aggregate(PRICE ~ DATE, table, function(x){return(tail(x, 1))});
+rm(table);
+gc();
+
+# Spalten anfügen
+x <- cbind(x, "OPEN_PRICE"=open$PRICE);
+x <- cbind(x, "CLOSE_PRICE"=close$PRICE);
+
+# berechne return eines Tages
+x <- cbind(x, "RETURN"=(x$CLOSE_PRICE - x$OPEN_PRICE)/x$OPEN_PRICE);
+
+#############################################
+
+number_of_days <- 7;
+
+# extrahiere ersten und letzten Tag der Woche
+if (number_of_days > 1){
+   x <- cbind(x, "WEEK_DAY"=((1:nrow(x))%%number_of_days));
+   open <- x$OPEN_PRICE[x$WEEK_DAY==1];
+   close <- x$CLOSE_PRICE[x$WEEK_DAY==0];
+   open_date <- x$DATE[x$WEEK_DAY==1];
+   close_date <- x$DATE[x$WEEK_DAY==0];
+} else {
+   open <- x$OPEN_PRICE;
+   close <- x$CLOSE_PRICE;
+   open_date <- x$DATE;
+   close_date <- x$DATE;
+}
+
+# passe die Länge der Vektoren an sodass es für jeden Tag eine Entsprechung gibt, einer der Fälle ist glaube ich unnötig
+if (length(open) > length(close)) {open <- open[1:length(close)]; open_date <- open_date[1:length(close)];};
+if (length(open) < length(close)) {close <- close[1:length(open)]; close_date <- close_date[1:length(open)];};
+
+# erzeuge Datenframe für Wochen
+y <- data.frame("OPEN_PRICE"=open, "CLOSE_PRICE"=close, "DATE"=paste(open_date, close_date, sep=" - "));
+y <- cbind(y, "RETURN"=(y$CLOSE_PRICE - y$OPEN_PRICE)/y$OPEN_PRICE);
+
+##############################################
+
+# berechne "Schnitt" von Preis und füge diesen an Daten an
+y <- cbind(y, "PRICE_" = (y$OPEN_PRICE+y$CLOSE_PRICE)/2);
+
+# berechne logarithmischen Preis
+y$PRICE_ <- log10(y$PRICE_);
+
+# speichere Maximum von logarithmiertem Preis
+mlp <- max(y$PRICE_);
+
+# normalisiere Preis
+y$PRICE_ <- y$PRICE_/mlp;
+
+ma203 <- c(rep(NA, 28), rollapply((y$OPEN_PRICE + y$CLOSE_PRICE)/2, width=29, FUN=mean)); # MA203
+y$MA203 <- ma203;
+
+# berechne logarithmischen MA203
+y$MA203 <- log10(y$MA203);
+
+# normalisiere MA203
+y$MA203 <- y$MA203/mlp;
+
+##############################################
+
+data <- y;
+
+# different seeds generate several different lokal maxima, e.g. 3
+# one of those is the wanted one but not necessarily with maximal
+# log-likelyhood!
+set.seed(3);
+hmm4 <- depmix(RETURN ~ 1, family = gaussian(), nstates = 4, data=data);
+hmmfit4 <- fit(hmm4, em.control=em.control(maxit=5000, tol=1e-10), verbose = FALSE);
+
+aic <- AIC(hmmfit4);
+bic <- BIC(hmmfit4);
+llk <- logLik(hmmfit4);
+
+post_probs4 <- posterior(hmmfit4);
+post_probs4 <- cbind(post_probs4, data$PRICE_);
+post_probs4 <- cbind(post_probs4, data$DATE);
+post_probs4 <- cbind(post_probs4, data$MA203);
+
+rownames(post_probs4) <- NULL;
+nsc <- sum(c(post_probs4[,1], NA)!=c(NA, post_probs4[,1]), na.rm=TRUE);
+
+foo <- table(post_probs4[,1]);
+foo <- foo[order(foo, decreasing=TRUE)];
+
+colors <- rep(NA, 4);
+#colors[post_probs4[79,1]] <- "green";
+#colors[post_probs4[55,1]] <- "red";
+#colors[post_probs4[70,1]] <- "black";
+#colors[is.na(colors)] <- "violet";
+bar <- c("red", "black", "green", "violet");
+for (i in 1:length(foo))
+   colors[as.numeric(names(foo)[i])] <- bar[i];
+
+dev.new(width=19, height=3.5);
+matplot(post_probs4[,-c(1,7)], type="l", col=c(colors, "blue", "orange"), lty = c(1,1,1,1,1,1), xaxt="n");
+
+int <- floor(nrow(y)/7) - 1; # warum auch immer minus 1?
+axis(1, at = int*(0:7), labels = y$DATE[int*(0:7)+1]);
+legend("left", legend = c("bubble", "bullish", "sideways", "bearish", "price", "MA203"), col = c("green", "violet", "black", "red", "blue", "orange"), lty = c(1,1,1,1,1,1), lwd = 1 , xpd = T );
+
+title(paste("Four states HMM (", x$DATE[nrow(x)], "):\nlogLik = ", format(round(llk, 2), nsmall = 2), ", AIC = ", format(round(aic, 2), nsmall = 2), ", BIC = ", format(round(bic, 2), nsmall = 2), ", # of state changes = ", nsc, sep=""));
+
+for (i in 1:nrow(post_probs4)){rect(i-1, 0, i, -0.1, col=colors[post_probs4[i,1]], border=NA)}
