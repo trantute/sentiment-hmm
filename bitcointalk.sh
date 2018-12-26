@@ -1,6 +1,6 @@
 #!/bin/bash
 #rm output; # complains as long as there is no output file
-for i in {3467..4058} # the set of pages
+for i in {1..4058} # the set of pages
 do
    # seems to be necessary, otherwise bitcointalk.org blocks,
    # thus download takes some time, without it would be faster
