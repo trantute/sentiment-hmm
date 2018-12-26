@@ -13,13 +13,14 @@ dates <- cbind(dates, "ID2"=ret);
 dates_table <- table(dates[,"ID2"]);
 
 # plot distribution of comments over time
-plot(dates_table);
+dev.new();
+plot(dates_table, main="'Der Aktuelle Kursverlauf'-thread: comments/day");
 
 # make a new plot
 dev.new();
 
 # create the distribution of comments per day
-h <- hist(log(dates_table), xlim=c(-2, 10));
+h <- hist(log(dates_table), xlim=c(-2, 10), main="'Der Aktuelle Kursverlauf'-thread: distribution of log(comments/day)");
 
 # fit a normal distribution to the logarithmized
 # distribution of comments per day
