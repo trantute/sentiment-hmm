@@ -9,11 +9,11 @@ do
    # compute the page index
    index=$(((i-1) * 20));
 
-   # download of the whole "Der Aktuelle Kursverlauf"-Thread
+   # download of the whole "Der Aktuelle Kursverlauf"-Thread in the following
    # since a page might block, if a bot is downloading, lets mask the bot
-   # can be extended with addition firefox versions
+   # can be extended with additional firefox versions ...
 
-   # sample an integer from {0,1}
+   # sample an integer in {0,1}
    r=$(shuf -i 0-1 -n 1);
 
    # if r equals 0, then fake a firefox for linux
