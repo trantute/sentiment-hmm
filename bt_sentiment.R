@@ -108,5 +108,21 @@ dev.new(width=19, height=3.5);
 matplot(ret_week$RETURN, type="l", main="'Der Aktuelle Kursverlauf'-thread: return/week of comments", xaxt="n");
 nweeks <- 10;
 int <- floor(nrow(ret_week)/nweeks);
-bla <- axis(1, at = int*(0:nweeks), labels = as.character(ret_week$DATE[int*(0:nweeks)+1]));
+axis(1, at = int*(0:nweeks), labels = as.character(ret_week$DATE[int*(0:nweeks)+1]));
 abline(h=0);
+
+# compute hmm
+library(depmixS4);
+hmm <- depmix(PRICE ~ 1, family = gaussian(), nstates = 2, data=ret_week);
+hmmfit <- fit(hmm, verbose = FALSE);
+post_probs <- posterior(hmmfit);
+
+# create plot
+dev.new(width=19, height=3.5);
+matplot(post_probs[,-1], type="l", col=c("darkgreen", "red"), lty = c(1,1), xaxt="n");
+nweeks <- 10;
+int <- floor(nrow(ret_week)/nweeks);
+axis(1, at = int*(0:nweeks), labels = as.character(ret_week$DATE[int*(0:nweeks)+1]));
+legend("left", legend = c("state 1", "state 2"), col = c("darkgreen", "red"), lty = c(1,1), lwd = 1 , xpd = T );
+title("'Der Aktuelle Kursverlauf'-thread: comments-HMM with two states");
+for (i in 1:nrow(post_probs)){rect(i-1, -0.01, i, -0.11, col=c("darkgreen", "red")[post_probs[i,1]], border=NA)}
