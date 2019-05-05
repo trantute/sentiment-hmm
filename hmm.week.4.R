@@ -107,6 +107,18 @@ post_probs4 <- cbind(post_probs4, data$PRICE_);
 post_probs4 <- cbind(post_probs4, data$DATE);
 post_probs4 <- cbind(post_probs4, data$MA203);
 
+# make weeks
+weeks <- rep(NA, nrow(post_probs4));
+start_year <- 2011;
+indices <- sort(which(grepl(paste("^", start_year, sep=""), post_probs4[,"data$DATE"])));
+weeks[indices] <- (52-length(indices) + 1):52;
+
+start_index <- max(which(!is.na(weeks))) + 1;
+for (i in start_index:length(weeks)){
+   weeks[i] <- (i - start_index) %% 52 + 1;
+}
+weeks <- which(weeks %in% c(1,27));
+
 rownames(post_probs4) <- NULL;
 nsc <- sum(c(post_probs4[,1], NA)!=c(NA, post_probs4[,1]), na.rm=TRUE);
 
@@ -125,9 +137,8 @@ for (i in 1:length(foo))
 dev.new(width=19, height=3.5);
 matplot(post_probs4[,-c(1,7)], type="l", col=c(colors, "blue", "orange"), lty = c(1,1,1,1,1,1), xaxt="n");
 
-int <- floor(nrow(y)/7) - 1; # warum auch immer minus 1?
-axis(1, at = int*(0:7), labels = y$DATE[int*(0:7)+1]);
-legend("left", legend = c("bubble", "bullish", "sideways", "bearish", "price", "MA203"), col = c("green", "violet", "black", "red", "blue", "orange"), lty = c(1,1,1,1,1,1), lwd = 1 , xpd = T );
+axis(1, at = weeks, labels = y$DATE[weeks]);
+legend("left", legend = c("bullish", "bubble", "sideways", "bearish", "price", "MA203"), col = c("green", "violet", "black", "red", "blue", "orange"), lty = c(1,1,1,1,1,1,1), lwd = 1 , xpd = T );
 
 title(paste("Four states HMM (", x$DATE[nrow(x)], "):\nlogLik = ", format(round(llk, 2), nsmall = 2), ", AIC = ", format(round(aic, 2), nsmall = 2), ", BIC = ", format(round(bic, 2), nsmall = 2), ", # of state changes = ", nsc, sep=""));
 
