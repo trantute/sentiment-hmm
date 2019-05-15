@@ -1,3 +1,5 @@
+library('depmixS4');
+
 load("fit.RData"); # needs a fitted and saved hmm
 
 A <- t(matrix(getpars(hmmfit4), 4,7));
