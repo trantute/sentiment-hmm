@@ -133,7 +133,7 @@ dev.new(width=19, height=3.5);
 matplot(post_probs5[,-c(1,8)], type="l", col=c(colors, "blue", "orange"), lty = c(1,1,1,1,1,1,1), xaxt="n");
 
 axis(1, at = weeks, labels = y$DATE[weeks]);
-legend("left", legend = c("bubble", "bullish", "sideways", "bearish", "dead", "price", "MA203"), col = c("green", "violet", "black", "red", "red4", "blue", "orange"), lty = c(1,1,1,1,1,1,1), lwd = 1 , xpd = T );
+legend("left", legend = c("bullish", "willy", "sideways", "bearish", "dead", "price", "MA203"), col = c("green", "violet", "black", "red", "red4", "blue", "orange"), lty = c(1,1,1,1,1,1,1), lwd = 1 , xpd = T );
 
 title(paste("Five states HMM (", x$DATE[nrow(x)], "):\nlogLik = ", format(round(llk, 2), nsmall = 2), ", AIC = ", format(round(aic, 2), nsmall = 2), ", BIC = ", format(round(bic, 2), nsmall = 2), ", # of state changes = ", nsc, sep=""));
 
