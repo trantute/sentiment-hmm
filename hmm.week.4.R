@@ -34,27 +34,21 @@ gc();
 # Spalten anfügen
 x <- cbind(x, "OPEN_PRICE"=open$PRICE);
 x <- cbind(x, "CLOSE_PRICE"=close$PRICE);
+x <- cbind(x, "WEEK_DAY" = weekdays(x$DATE));
+x <- x[which(grepl("Montag", x$WEEK_DAY))[1]:nrow(x),];
+
+# remove all incomplete weeks
+x <- x[81:nrow(x),];
 
 # berechne return eines Tages
 x <- cbind(x, "RETURN"=(x$CLOSE_PRICE - x$OPEN_PRICE)/x$OPEN_PRICE);
 
 #############################################
 
-number_of_days <- 7;
-
-# extrahiere ersten und letzten Tag der Woche
-if (number_of_days > 1){
-   x <- cbind(x, "WEEK_DAY"=((1:nrow(x))%%number_of_days));
-   open <- x$OPEN_PRICE[x$WEEK_DAY==1];
-   close <- x$CLOSE_PRICE[x$WEEK_DAY==0];
-   open_date <- x$DATE[x$WEEK_DAY==1];
-   close_date <- x$DATE[x$WEEK_DAY==0];
-} else {
-   open <- x$OPEN_PRICE;
-   close <- x$CLOSE_PRICE;
-   open_date <- x$DATE;
-   close_date <- x$DATE;
-}
+open <- x$OPEN_PRICE[grepl("Montag", x$WEEK_DAY)];
+close <- x$CLOSE_PRICE[grepl("Sonntag", x$WEEK_DAY)];
+open_date <- x$DATE[grepl("Montag", x$WEEK_DAY)];
+close_date <- x$DATE[grepl("Sonntag", x$WEEK_DAY)];
 
 # passe die Länge der Vektoren an sodass es für jeden Tag eine Entsprechung gibt, einer der Fälle ist glaube ich unnötig
 if (length(open) > length(close)) {open <- open[1:length(close)]; open_date <- open_date[1:length(close)];};
@@ -126,11 +120,7 @@ foo <- table(post_probs4[,1]);
 foo <- foo[order(foo, decreasing=TRUE)];
 
 colors <- rep(NA, 4);
-#colors[post_probs4[79,1]] <- "green";
-#colors[post_probs4[55,1]] <- "red";
-#colors[post_probs4[70,1]] <- "black";
-#colors[is.na(colors)] <- "violet";
-bar <- c("red", "black", "green", "violet");
+bar <- c("red", "black", "violet", "green");
 for (i in 1:length(foo))
    colors[as.numeric(names(foo)[i])] <- bar[i];
 
@@ -142,4 +132,4 @@ legend("left", legend = c("bullish", "bubble", "sideways", "bearish", "price", "
 
 title(paste("Four states HMM (", x$DATE[nrow(x)], "):\nlogLik = ", format(round(llk, 2), nsmall = 2), ", AIC = ", format(round(aic, 2), nsmall = 2), ", BIC = ", format(round(bic, 2), nsmall = 2), ", # of state changes = ", nsc, sep=""));
 
-for (i in 1:nrow(post_probs4)){rect(i-1, 0, i, -0.1, col=colors[post_probs4[i,1]], border=NA)}
+for (i in (1:nrow(post_probs4))+1){rect(i-1, 0, i, -0.1, col=colors[post_probs4[i,1]], border=NA)}
