@@ -48,7 +48,7 @@ simulateN <- function(start_price = NULL, start_state = 1, n = 1, N = 10^6, fit_
    A <- t(matrix(getpars(fit), 4,7));
    tm <- A[2:5,1:4];
 
-   mvs <- c(A[6,1], A[6,3], A[7,1], A[7,2]);
+   mvs <- c(A[6,1], A[6,3], A[7,1], A[7,3]);
    sds <- c(A[6,2], A[6,4], A[7,2], A[7,4]);
 
    S <- rep(NA, N);
@@ -111,3 +111,6 @@ simulateNn <- function(start_price = NULL, start_state = 1, n = 1, N = 10^6, fit
 #S[is.na(S)] <- 0;
 #median_price <- 10^median(log10(S), na.rm=TRUE);
 #hist(log10(S), 100, main=paste("log10 of price of 10^6 sampled markov chains\nmedian price = ", median_price, " $ after ", weeks, " weeks,\nin ", 100*sum(S==0)/n, " % of runs, Bitcoin reaches a price of 0 $", sep=""))
+
+#ret <- simulateN(start_price=10600, start_state=4, n = 1, N = 10^6, fit_file = "fit.2019.19.07.RData", theoretical=FALSE, verbose=FALSE);
+#pie(c(seq(0.05,0.5,0.05), seq(0.45,0.05,-0.05)), labels=round(ret), clockwise=TRUE, col=colorRampPalette(c('red', 'black', 'green', 'violet'), alpha = FALSE)(19), main="Pie chart of potential BTC prices for 2019-07-21\nbased on data until 2019-07-14");
