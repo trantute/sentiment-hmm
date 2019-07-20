@@ -3,6 +3,9 @@ library(anytime); # für Zeitumrechnung
 library(data.table); # für Tabellenkonvertierung
 library('depmixS4'); # für HMMs
 
+monday <- "Monday";
+sunday <- "Sunday";
+
 temp <- tempfile();
 download.file("https://api.bitcoincharts.com/v1/csv/bitstampUSD.csv.gz", temp);
 table <- read.csv(gzfile(temp));
@@ -35,7 +38,6 @@ gc();
 x <- cbind(x, "OPEN_PRICE"=open$PRICE);
 x <- cbind(x, "CLOSE_PRICE"=close$PRICE);
 x <- cbind(x, "WEEK_DAY" = weekdays(x$DATE));
-x <- x[which(grepl("Montag", x$WEEK_DAY))[1]:nrow(x),];
 
 # remove all incomplete weeks
 x <- x[81:nrow(x),];
@@ -45,10 +47,10 @@ x <- cbind(x, "RETURN"=(x$CLOSE_PRICE - x$OPEN_PRICE)/x$OPEN_PRICE);
 
 #############################################
 
-open <- x$OPEN_PRICE[grepl("Montag", x$WEEK_DAY)];
-close <- x$CLOSE_PRICE[grepl("Sonntag", x$WEEK_DAY)];
-open_date <- x$DATE[grepl("Montag", x$WEEK_DAY)];
-close_date <- x$DATE[grepl("Sonntag", x$WEEK_DAY)];
+open <- x$OPEN_PRICE[grepl(monday, x$WEEK_DAY)];
+close <- x$CLOSE_PRICE[grepl(sunday, x$WEEK_DAY)];
+open_date <- x$DATE[grepl(monday, x$WEEK_DAY)];
+close_date <- x$DATE[grepl(sunday, x$WEEK_DAY)];
 
 # passe die Länge der Vektoren an sodass es für jeden Tag eine Entsprechung gibt, einer der Fälle ist glaube ich unnötig
 if (length(open) > length(close)) {open <- open[1:length(close)]; open_date <- open_date[1:length(close)];};
