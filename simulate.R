@@ -114,4 +114,4 @@ simulateNn <- function(start_price = NULL, start_state = 1, n = 1, N = 10^6, fit
 
 #ret <- simulateN(start_price=10600, start_state=4, n = 1, N = 10^6, fit_file = "fit.2019.07.20.RData", theoretical=FALSE, verbose=FALSE);
 #ret_ <- seq(0.05,1,0.05); names(ret_) <- paste(paste(c(0, round(ret)), c(round(ret), Inf), sep=" - "), " (", 100*ret_, "%)", sep="");
-#par(mar=c(0,5,4,6), lwd=1); pie(c(seq(0.05,0.5,0.05), seq(0.5,0.05,-0.05)), labels=names(ret_), clockwise=TRUE, col=colorRampPalette(c('red', 'black', 'green', 'violet'), alpha = FALSE)(19), main="Pie chart of potential BTC prices in US-$ for 2019-07-21\n(based on data until 2019-07-14)", init.angle=0);
+#par(mar=c(0,5,4,6), lwd=1); pie(rep(0.05, 20), labels=names(ret_), clockwise=TRUE, col=colorRampPalette(c('red', 'black', 'green', 'violet'), alpha = FALSE)(20), main="Pie chart of potential BTC prices in US-$ for 2019-07-21\n(based on data until 2019-07-14)");
